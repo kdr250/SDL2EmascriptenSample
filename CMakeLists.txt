@@ -7,7 +7,9 @@ endif()
 
 project(SdlWithCMake VERSION 1.0)
 
-find_package(sdl2 CONFIG REQUIRED)
+if (NOT EMSCRIPTEN)
+    find_package(sdl2 CONFIG REQUIRED)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
@@ -23,17 +25,29 @@ add_executable(
     ${SOURCES}
 )
 
-target_link_libraries(
-    SdlWithCMake PRIVATE
-    $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-    $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-)
+if (EMSCRIPTEN)
 
-add_custom_command(
-    TARGET SdlWithCMake POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:SdlWithCMake>/resources
-)
+    set(USE_FLAGS "-s USE_SDL=2 --preload-file resources/")
+    set(CMAKE_CXX_FLAGS ${USE_FLAGS})
+    set_target_properties(SdlWithCMake PROPERTIES SUFFIX ".html")
 
-enable_testing()
+    file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/resources)
 
-add_subdirectory(test)
+else()
+
+    target_link_libraries(
+        SdlWithCMake PRIVATE
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
+
+    add_custom_command(
+        TARGET SdlWithCMake POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:SdlWithCMake>/resources
+    )
+
+    enable_testing()
+
+    add_subdirectory(test)
+
+endif()

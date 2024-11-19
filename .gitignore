@@ -417,3 +417,6 @@ build
 
 # vcpkg
 vcpkg_installed/
+
+# Emscripten
+build-web
