@@ -1,7 +1,7 @@
 #include <SDL2/SDL.h>
 
 #ifdef __EMSCRIPTEN__
-#include <emscripten.h>
+    #include <emscripten.h>
 #endif
 
 bool running = true;
@@ -38,12 +38,11 @@ void mainloop()
     }
 
     // set draw color blue
-    SDL_SetRenderDrawColor(
-        renderer,
-        0,    // R
-        0,    // G
-        255,  // B
-        255   // A
+    SDL_SetRenderDrawColor(renderer,
+                           0,    // R
+                           0,    // G
+                           255,  // B
+                           255   // A
     );
 
     // clear back buffer
@@ -51,7 +50,7 @@ void mainloop()
 
     // Draw rect
     int x = SDL_GetTicks() % 1024;
-    SDL_Rect rect{ x, 100, 100, 100 };
+    SDL_Rect rect {x, 100, 100, 100};
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderFillRect(renderer, &rect);
 
@@ -68,13 +67,12 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    window = SDL_CreateWindow(
-        "Hello world !!",        // window title
-        SDL_WINDOWPOS_UNDEFINED, // Top left x-coordinate of window
-        SDL_WINDOWPOS_UNDEFINED, // Top left y-coordinate of window
-        1024,                    // width of window
-        768,                     // height of window
-        0                        // flags (0 for no flags set)
+    window = SDL_CreateWindow("Hello world !!",         // window title
+                              SDL_WINDOWPOS_UNDEFINED,  // Top left x-coordinate of window
+                              SDL_WINDOWPOS_UNDEFINED,  // Top left y-coordinate of window
+                              1024,                     // width of window
+                              768,                      // height of window
+                              0                         // flags (0 for no flags set)
     );
 
     if (!window)
@@ -83,11 +81,9 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    renderer = SDL_CreateRenderer(
-        window,  // window to create renderer for
-        -1,      // usually -1
-        0
-    );
+    renderer = SDL_CreateRenderer(window,  // window to create renderer for
+                                  -1,      // usually -1
+                                  0);
 
     if (!renderer)
     {
