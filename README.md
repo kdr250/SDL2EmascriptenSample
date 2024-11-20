@@ -1,5 +1,6 @@
 # SDL2EmscriptenSample
 SDL2 + CMake + Emscripten のサンプルです。
+Webブラウザ上でSDL2で作ったゲームが動作します。
 
 ## ビルド方法
 ### ネイティブの場合
