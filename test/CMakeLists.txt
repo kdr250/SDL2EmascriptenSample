@@ -1,7 +1,6 @@
 project(TestProject VERSION 1.0)
 
 find_package(GTest CONFIG REQUIRED)
-find_package(sdl2 CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)

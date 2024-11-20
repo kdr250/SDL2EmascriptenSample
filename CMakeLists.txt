@@ -8,7 +8,8 @@ endif()
 project(SdlWithCMake VERSION 1.0)
 
 if (NOT EMSCRIPTEN)
-    find_package(sdl2 CONFIG REQUIRED)
+    find_package(SDL2 CONFIG REQUIRED)
+    find_package(SDL2_image CONFIG REQUIRED)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -27,11 +28,11 @@ add_executable(
 
 if (EMSCRIPTEN)
 
-    set(USE_FLAGS "-s USE_SDL=2 --preload-file resources/")
+    set(USE_FLAGS "-s USE_SDL=2 -s USE_SDL_IMAGE=2 -s SDL2_IMAGE_FORMATS=\"[\"\"png\"\"]\" --preload-file resources/")
     set(CMAKE_CXX_FLAGS ${USE_FLAGS})
     set_target_properties(SdlWithCMake PROPERTIES SUFFIX ".html")
 
-    file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/resources)
+    file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 
 else()
 
@@ -39,6 +40,7 @@ else()
         SdlWithCMake PRIVATE
         $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+        $<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static>
     )
 
     add_custom_command(
