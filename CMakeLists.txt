@@ -10,6 +10,7 @@ project(SdlWithCMake VERSION 1.0)
 if (NOT EMSCRIPTEN)
     find_package(SDL2 CONFIG REQUIRED)
     find_package(GLEW REQUIRED)
+    find_package(PNG REQUIRED)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
@@ -28,7 +29,7 @@ add_executable(
 
 if (EMSCRIPTEN)
 
-    set(USE_FLAGS "-s USE_SDL=2 --preload-file resources/")
+    set(USE_FLAGS "-s USE_SDL=2 -s USE_LIBPNG=1 --preload-file resources/")
     set(CMAKE_CXX_FLAGS ${USE_FLAGS})
     set_target_properties(SdlWithCMake PROPERTIES SUFFIX ".html")
 
@@ -41,6 +42,7 @@ else()
         $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
         GLEW::GLEW
+        PNG::PNG
     )
 
     add_custom_command(
