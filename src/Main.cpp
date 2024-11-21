@@ -12,6 +12,9 @@
     #include <emscripten/html5.h>
 #endif
 
+int WINDOW_WIDTH  = 1024;
+int WINDOW_HEIGHT = 768;
+
 bool running = true;
 SDL_Window* window;
 SDL_GLContext context;
@@ -26,10 +29,10 @@ GLuint fragShader         = 0;
 bool createVertexArray()
 {
     float vertices[] = {
-        -0.5f, 0.5f,  0.0f, 0.0f, 0.0f,  // top left
-        0.5f,  0.5f,  0.0f, 1.0f, 0.0f,  // top right
-        0.5f,  -0.5f, 0.0f, 1.0f, 1.0f,  // bottom right
-        -0.5f, -0.5f, 0.0f, 0.0f, 1.0f   // bottom left
+        -0.1f, 0.1f,  0.0f, 0.0f, 0.0f,  // top left
+        0.1f,  0.1f,  0.0f, 1.0f, 0.0f,  // top right
+        0.1f,  -0.1f, 0.0f, 1.0f, 1.0f,  // bottom right
+        -0.1f, -0.1f, 0.0f, 0.0f, 1.0f   // bottom left
     };
     unsigned int numVerts   = 4;
     unsigned int indices[]  = {0, 1, 2, 2, 3, 0};
@@ -270,6 +273,10 @@ void mainloop()
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
 
+    // Set window size as uniform
+    GLuint locationId = glGetUniformLocation(shaderProgram, "uWindowSize");
+    glUniform2f(locationId, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
+
     // set active
     glUseProgram(shaderProgram);
     glBindVertexArray(vertexArray);
@@ -310,8 +317,8 @@ int main(int argc, char* argv[])
     window = SDL_CreateWindow("Hello world !!",         // window title
                               SDL_WINDOWPOS_UNDEFINED,  // Top left x-coordinate of window
                               SDL_WINDOWPOS_UNDEFINED,  // Top left y-coordinate of window
-                              1024,                     // width of window
-                              768,                      // height of window
+                              WINDOW_WIDTH,             // width of window
+                              WINDOW_HEIGHT,            // height of window
                               SDL_WINDOW_OPENGL);
 
     if (!window)
