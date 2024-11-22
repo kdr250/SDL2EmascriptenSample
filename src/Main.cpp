@@ -262,6 +262,10 @@ void mainloop()
         {
             running = false;
         }
+        if (event.window.event == SDL_WINDOWEVENT_RESIZED)
+        {
+            SDL_GetWindowSize(window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
+        }
     }
 
     const Uint8* state = SDL_GetKeyboardState(NULL);
@@ -319,7 +323,7 @@ int main(int argc, char* argv[])
                               SDL_WINDOWPOS_UNDEFINED,  // Top left y-coordinate of window
                               WINDOW_WIDTH,             // width of window
                               WINDOW_HEIGHT,            // height of window
-                              SDL_WINDOW_OPENGL);
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
     if (!window)
     {
