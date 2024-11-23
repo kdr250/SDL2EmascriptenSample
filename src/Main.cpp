@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <png.h>
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <sstream>
