@@ -251,6 +251,35 @@ void terminate()
     SDL_Quit();
 }
 
+void processInput(const Uint8* keyboardState)
+{
+    float speed = 10.0f;
+    if (keyboardState[SDL_SCANCODE_A])
+    {
+        texturePositionX -= speed;
+    }
+    if (keyboardState[SDL_SCANCODE_D])
+    {
+        texturePositionX += speed;
+    }
+    if (keyboardState[SDL_SCANCODE_W])
+    {
+        texturePositionY -= speed;
+    }
+    if (keyboardState[SDL_SCANCODE_S])
+    {
+        texturePositionY += speed;
+    }
+
+    float diffX      = textureWidth / 2.0f * textureScale / 2.0f;
+    texturePositionX = std::max(texturePositionX, diffX);
+    texturePositionX = std::min(texturePositionX, WINDOW_WIDTH - diffX);
+
+    float diffY      = textureHeight / 2.0f * textureScale / 2.0f;
+    texturePositionY = std::max(texturePositionY, diffY);
+    texturePositionY = std::min(texturePositionY, WINDOW_HEIGHT - diffY);
+}
+
 void mainloop()
 {
     if (!running)
@@ -277,6 +306,8 @@ void mainloop()
     {
         running = false;
     }
+
+    processInput(state);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
