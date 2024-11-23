@@ -21,8 +21,9 @@ SDL_GLContext context;
 unsigned int textureId     = 0;
 unsigned int textureWidth  = 0;
 unsigned int textureHeight = 0;
-float texturePositionX     = 0.0f;
-float texturePositionY     = 0.0f;
+float texturePositionX     = WINDOW_WIDTH / 2.0f;
+float texturePositionY     = WINDOW_HEIGHT / 2.0f;
+float textureScale         = 5.0f;
 unsigned int vertexArray   = 0;
 unsigned int vertexBuffer  = 0;
 unsigned int indexBuffer   = 0;
@@ -287,6 +288,8 @@ void mainloop()
     glUniform2f(locationIdTexture, (GLfloat)textureWidth, (GLfloat)textureHeight);
     GLuint locationIdTexturePos = glGetUniformLocation(shaderProgram, "uTexturePosition");
     glUniform2f(locationIdTexturePos, (GLfloat)texturePositionX, (GLfloat)texturePositionY);
+    GLuint locationIdTextureScale = glGetUniformLocation(shaderProgram, "uTextureScale");
+    glUniform1f(locationIdTextureScale, (GLfloat)textureScale);
 
     // set active
     glUseProgram(shaderProgram);
