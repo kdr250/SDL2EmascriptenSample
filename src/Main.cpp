@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <png.h>
+#include <algorithm>
 #include <fstream>
 #include <memory>
 #include <sstream>
@@ -18,21 +19,26 @@ int WINDOW_HEIGHT = 768;
 bool running = true;
 SDL_Window* window;
 SDL_GLContext context;
-unsigned int textureId    = 0;
-unsigned int vertexArray  = 0;
-unsigned int vertexBuffer = 0;
-unsigned int indexBuffer  = 0;
-GLuint shaderProgram      = 0;
-GLuint vertexShader       = 0;
-GLuint fragShader         = 0;
+unsigned int textureId     = 0;
+unsigned int textureWidth  = 0;
+unsigned int textureHeight = 0;
+float texturePositionX     = WINDOW_WIDTH / 2.0f;
+float texturePositionY     = WINDOW_HEIGHT / 2.0f;
+float textureScale         = 5.0f;
+unsigned int vertexArray   = 0;
+unsigned int vertexBuffer  = 0;
+unsigned int indexBuffer   = 0;
+GLuint shaderProgram       = 0;
+GLuint vertexShader        = 0;
+GLuint fragShader          = 0;
 
 bool createVertexArray()
 {
     float vertices[] = {
-        -0.1f, 0.1f,  0.0f, 0.0f, 0.0f,  // top left
-        0.1f,  0.1f,  0.0f, 1.0f, 0.0f,  // top right
-        0.1f,  -0.1f, 0.0f, 1.0f, 1.0f,  // bottom right
-        -0.1f, -0.1f, 0.0f, 0.0f, 1.0f   // bottom left
+        -1.0f, 1.0f,  0.0f, 0.0f, 0.0f,  // top left
+        1.0f,  1.0f,  0.0f, 1.0f, 0.0f,  // top right
+        1.0f,  -1.0f, 0.0f, 1.0f, 1.0f,  // bottom right
+        -1.0f, -1.0f, 0.0f, 0.0f, 1.0f   // bottom left
     };
     unsigned int numVerts   = 4;
     unsigned int indices[]  = {0, 1, 2, 2, 3, 0};
@@ -189,6 +195,9 @@ bool loadTexture(const std::string& fileName)
     auto colorType  = png_get_color_type(pngStruct, pngInfo);
     auto numChannel = png_get_channels(pngStruct, pngInfo);
 
+    textureWidth  = (unsigned int)width;
+    textureHeight = (unsigned int)height;
+
     // prepare storage
     auto pixels  = std::make_unique<png_byte[]>(height * rowLen);
     auto rowPtrs = std::make_unique<png_bytep[]>(height);
@@ -243,6 +252,35 @@ void terminate()
     SDL_Quit();
 }
 
+void processInput(const Uint8* keyboardState)
+{
+    float speed = 10.0f;
+    if (keyboardState[SDL_SCANCODE_A])
+    {
+        texturePositionX -= speed;
+    }
+    if (keyboardState[SDL_SCANCODE_D])
+    {
+        texturePositionX += speed;
+    }
+    if (keyboardState[SDL_SCANCODE_W])
+    {
+        texturePositionY -= speed;
+    }
+    if (keyboardState[SDL_SCANCODE_S])
+    {
+        texturePositionY += speed;
+    }
+
+    float diffX      = textureWidth / 2.0f * textureScale / 2.0f;
+    texturePositionX = std::max(texturePositionX, diffX);
+    texturePositionX = std::min(texturePositionX, WINDOW_WIDTH - diffX);
+
+    float diffY      = textureHeight / 2.0f * textureScale / 2.0f;
+    texturePositionY = std::max(texturePositionY, diffY);
+    texturePositionY = std::min(texturePositionY, WINDOW_HEIGHT - diffY);
+}
+
 void mainloop()
 {
     if (!running)
@@ -262,10 +300,6 @@ void mainloop()
         {
             running = false;
         }
-        if (event.window.event == SDL_WINDOWEVENT_RESIZED)
-        {
-            SDL_GetWindowSize(window, &WINDOW_WIDTH, &WINDOW_HEIGHT);
-        }
     }
 
     const Uint8* state = SDL_GetKeyboardState(NULL);
@@ -274,12 +308,20 @@ void mainloop()
         running = false;
     }
 
+    processInput(state);
+
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
 
-    // Set window size as uniform
-    GLuint locationId = glGetUniformLocation(shaderProgram, "uWindowSize");
-    glUniform2f(locationId, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
+    // Set window size and texture size and position as uniform
+    GLuint locationIdWindow = glGetUniformLocation(shaderProgram, "uWindowSize");
+    glUniform2f(locationIdWindow, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
+    GLuint locationIdTexture = glGetUniformLocation(shaderProgram, "uTextureSize");
+    glUniform2f(locationIdTexture, (GLfloat)textureWidth, (GLfloat)textureHeight);
+    GLuint locationIdTexturePos = glGetUniformLocation(shaderProgram, "uTexturePosition");
+    glUniform2f(locationIdTexturePos, (GLfloat)texturePositionX, (GLfloat)texturePositionY);
+    GLuint locationIdTextureScale = glGetUniformLocation(shaderProgram, "uTextureScale");
+    glUniform1f(locationIdTextureScale, (GLfloat)textureScale);
 
     // set active
     glUseProgram(shaderProgram);
@@ -323,7 +365,7 @@ int main(int argc, char* argv[])
                               SDL_WINDOWPOS_UNDEFINED,  // Top left y-coordinate of window
                               WINDOW_WIDTH,             // width of window
                               WINDOW_HEIGHT,            // height of window
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+                              SDL_WINDOW_OPENGL);
 
     if (!window)
     {
