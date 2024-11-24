@@ -3,6 +3,7 @@
 #include <png.h>
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -31,6 +32,7 @@ unsigned int indexBuffer   = 0;
 GLuint shaderProgram       = 0;
 GLuint vertexShader        = 0;
 GLuint fragShader          = 0;
+Uint64 tickCount           = 0;
 
 bool createVertexArray()
 {
@@ -252,9 +254,9 @@ void terminate()
     SDL_Quit();
 }
 
-void processInput(const Uint8* keyboardState)
+void processInput(const Uint8* keyboardState, const float deltaTime)
 {
-    float speed = 10.0f;
+    float speed = 300.0f * deltaTime;
     if (keyboardState[SDL_SCANCODE_A])
     {
         texturePositionX -= speed;
@@ -292,6 +294,13 @@ void mainloop()
 #endif
     }
 
+    // Delta time is the difference in ticks from last frame
+    float deltaTime = (SDL_GetTicks64() - tickCount) / 1000.0f;
+    deltaTime       = std::min(deltaTime, 0.05f);
+
+    // Update tick counts (for next frame)
+    tickCount = SDL_GetTicks64();
+
     // Wait for close
     SDL_Event event;
     while (SDL_PollEvent(&event))
@@ -308,7 +317,7 @@ void mainloop()
         running = false;
     }
 
-    processInput(state);
+    processInput(state, deltaTime);
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
@@ -410,6 +419,10 @@ int main(int argc, char* argv[])
 #else
     while (running)
     {
+        // Wait until 16ms has elapsed since last frame
+        while (!SDL_TICKS_PASSED(SDL_GetTicks64(), tickCount + 16))
+            ;
+
         mainloop();
     }
     terminate();
