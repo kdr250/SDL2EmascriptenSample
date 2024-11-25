@@ -7,6 +7,9 @@
 #include <sstream>
 #include <string>
 
+#define GLM_FORCE_PURE
+#include <glm/vec2.hpp>
+
 #ifdef __EMSCRIPTEN__
     #include <SDL2/SDL_opengles2.h>
     #include <emscripten.h>
@@ -22,16 +25,15 @@ SDL_GLContext context;
 unsigned int textureId     = 0;
 unsigned int textureWidth  = 0;
 unsigned int textureHeight = 0;
-float texturePositionX     = WINDOW_WIDTH / 2.0f;
-float texturePositionY     = WINDOW_HEIGHT / 2.0f;
-float textureScale         = 5.0f;
-unsigned int vertexArray   = 0;
-unsigned int vertexBuffer  = 0;
-unsigned int indexBuffer   = 0;
-GLuint shaderProgram       = 0;
-GLuint vertexShader        = 0;
-GLuint fragShader          = 0;
-Uint64 tickCount           = 0;
+glm::vec2 texturePosition;
+float textureScale        = 5.0f;
+unsigned int vertexArray  = 0;
+unsigned int vertexBuffer = 0;
+unsigned int indexBuffer  = 0;
+GLuint shaderProgram      = 0;
+GLuint vertexShader       = 0;
+GLuint fragShader         = 0;
+Uint32 tickCount          = 0;
 
 bool createVertexArray()
 {
@@ -258,28 +260,28 @@ void processInput(const Uint8* keyboardState, const float deltaTime)
     float speed = 300.0f * deltaTime;
     if (keyboardState[SDL_SCANCODE_A])
     {
-        texturePositionX -= speed;
+        texturePosition.x -= speed;
     }
     if (keyboardState[SDL_SCANCODE_D])
     {
-        texturePositionX += speed;
+        texturePosition.x += speed;
     }
     if (keyboardState[SDL_SCANCODE_W])
     {
-        texturePositionY -= speed;
+        texturePosition.y -= speed;
     }
     if (keyboardState[SDL_SCANCODE_S])
     {
-        texturePositionY += speed;
+        texturePosition.y += speed;
     }
 
-    float diffX      = textureWidth / 2.0f * textureScale / 2.0f;
-    texturePositionX = std::max(texturePositionX, diffX);
-    texturePositionX = std::min(texturePositionX, WINDOW_WIDTH - diffX);
+    float diffX       = textureWidth / 2.0f * textureScale / 2.0f;
+    texturePosition.x = std::max(texturePosition.x, diffX);
+    texturePosition.x = std::min(texturePosition.x, WINDOW_WIDTH - diffX);
 
-    float diffY      = textureHeight / 2.0f * textureScale / 2.0f;
-    texturePositionY = std::max(texturePositionY, diffY);
-    texturePositionY = std::min(texturePositionY, WINDOW_HEIGHT - diffY);
+    float diffY       = textureHeight / 2.0f * textureScale / 2.0f;
+    texturePosition.y = std::max(texturePosition.y, diffY);
+    texturePosition.y = std::min(texturePosition.y, WINDOW_HEIGHT - diffY);
 }
 
 void mainloop()
@@ -294,11 +296,11 @@ void mainloop()
     }
 
     // Delta time is the difference in ticks from last frame
-    float deltaTime = (SDL_GetTicks64() - tickCount) / 1000.0f;
+    float deltaTime = (SDL_GetTicks() - tickCount) / 1000.0f;
     deltaTime       = std::min(deltaTime, 0.05f);
 
     // Update tick counts (for next frame)
-    tickCount = SDL_GetTicks64();
+    tickCount = SDL_GetTicks();
 
     // Wait for close
     SDL_Event event;
@@ -327,7 +329,7 @@ void mainloop()
     GLuint locationIdTexture = glGetUniformLocation(shaderProgram, "uTextureSize");
     glUniform2f(locationIdTexture, (GLfloat)textureWidth, (GLfloat)textureHeight);
     GLuint locationIdTexturePos = glGetUniformLocation(shaderProgram, "uTexturePosition");
-    glUniform2f(locationIdTexturePos, (GLfloat)texturePositionX, (GLfloat)texturePositionY);
+    glUniform2f(locationIdTexturePos, texturePosition.x, texturePosition.y);
     GLuint locationIdTextureScale = glGetUniformLocation(shaderProgram, "uTextureScale");
     glUniform1f(locationIdTextureScale, (GLfloat)textureScale);
 
@@ -412,6 +414,9 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    texturePosition.x = WINDOW_WIDTH / 2.0f;
+    texturePosition.y = WINDOW_HEIGHT / 2.0f;
+
     // Main Loop
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(mainloop, 0, 1);
@@ -419,7 +424,7 @@ int main(int argc, char* argv[])
     while (running)
     {
         // Wait until 16ms has elapsed since last frame
-        while (!SDL_TICKS_PASSED(SDL_GetTicks64(), tickCount + 16))
+        while (!SDL_TICKS_PASSED(SDL_GetTicks(), tickCount + 16))
             ;
 
         mainloop();

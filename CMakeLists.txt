@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.19)
 
-if (DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+if (DEFINED CMAKE_TOOLCHAIN_FILE)
+    set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_TOOLCHAIN_FILE})
+    set(VCPKG_TARGET_TRIPLET "wasm32-emscripten")
+endif()
+
+if (DEFINED ENV{VCPKG_ROOT})
     cmake_path(SET VCPKG_PATH NORMALIZE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
-    set(CMAKE_TOOLCHAIN_FILE ${VCPKG_PATH} CACHE STRING "")
+    set(CMAKE_TOOLCHAIN_FILE ${VCPKG_PATH})
+else()
+    message(FATAL_ERROR "Please install vcpkg and set 'VCPKG_ROOT' environmental variable")    
 endif()
 
 project(SdlWithCMake VERSION 1.0)
@@ -12,6 +19,8 @@ if (NOT EMSCRIPTEN)
     find_package(GLEW REQUIRED)
     find_package(PNG REQUIRED)
 endif()
+
+find_package(glm CONFIG REQUIRED)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
@@ -35,6 +44,11 @@ if (EMSCRIPTEN)
 
     file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
 
+    target_link_libraries(
+        SdlWithCMake PRIVATE
+        glm
+    )
+
 else()
 
     target_link_libraries(
@@ -43,6 +57,7 @@ else()
         $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
         GLEW::GLEW
         PNG::PNG
+        glm
     )
 
     add_custom_command(
