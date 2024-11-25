@@ -236,7 +236,7 @@ bool loadTexture(const std::string& fileName)
     return true;
 }
 
-void terminate()
+void quit()
 {
     // Delete the program and shaders
     glDeleteProgram(shaderProgram);
@@ -424,7 +424,7 @@ int main(int argc, char* argv[])
 
         mainloop();
     }
-    terminate();
+    quit();
 #endif
 
     return EXIT_SUCCESS;
