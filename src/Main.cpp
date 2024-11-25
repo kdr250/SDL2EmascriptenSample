@@ -8,6 +8,7 @@
 #include <string>
 
 #define GLM_FORCE_PURE
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/vec2.hpp>
 
 #ifdef __EMSCRIPTEN__
@@ -329,7 +330,7 @@ void mainloop()
     GLuint locationIdTexture = glGetUniformLocation(shaderProgram, "uTextureSize");
     glUniform2f(locationIdTexture, (GLfloat)textureWidth, (GLfloat)textureHeight);
     GLuint locationIdTexturePos = glGetUniformLocation(shaderProgram, "uTexturePosition");
-    glUniform2f(locationIdTexturePos, texturePosition.x, texturePosition.y);
+    glUniform2fv(locationIdTexturePos, 1, glm::value_ptr(texturePosition));
     GLuint locationIdTextureScale = glGetUniformLocation(shaderProgram, "uTextureScale");
     glUniform1f(locationIdTextureScale, (GLfloat)textureScale);
 
