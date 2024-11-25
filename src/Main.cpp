@@ -7,6 +7,9 @@
 #include <sstream>
 #include <string>
 
+#define GLM_FORCE_PURE
+#include <glm/vec2.hpp>
+
 #ifdef __EMSCRIPTEN__
     #include <SDL2/SDL_opengles2.h>
     #include <emscripten.h>
@@ -31,7 +34,9 @@ unsigned int indexBuffer   = 0;
 GLuint shaderProgram       = 0;
 GLuint vertexShader        = 0;
 GLuint fragShader          = 0;
-Uint64 tickCount           = 0;
+Uint32 tickCount           = 0;
+
+glm::vec2 hoge(1.0f, 2.0f);
 
 bool createVertexArray()
 {
@@ -294,11 +299,11 @@ void mainloop()
     }
 
     // Delta time is the difference in ticks from last frame
-    float deltaTime = (SDL_GetTicks64() - tickCount) / 1000.0f;
+    float deltaTime = (SDL_GetTicks() - tickCount) / 1000.0f;
     deltaTime       = std::min(deltaTime, 0.05f);
 
     // Update tick counts (for next frame)
-    tickCount = SDL_GetTicks64();
+    tickCount = SDL_GetTicks();
 
     // Wait for close
     SDL_Event event;
@@ -419,7 +424,7 @@ int main(int argc, char* argv[])
     while (running)
     {
         // Wait until 16ms has elapsed since last frame
-        while (!SDL_TICKS_PASSED(SDL_GetTicks64(), tickCount + 16))
+        while (!SDL_TICKS_PASSED(SDL_GetTicks(), tickCount + 16))
             ;
 
         mainloop();
