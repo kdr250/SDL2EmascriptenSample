@@ -288,7 +288,7 @@ void mainloop()
     {
 #ifdef __EMSCRIPTEN__
         emscripten_cancel_main_loop(); /* this should "kill" the app. */
-        terminate();
+        quit();
         return;
 #endif
     }
