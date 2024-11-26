@@ -1,5 +1,6 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <png.h>
 #include <algorithm>
 #include <fstream>
@@ -35,6 +36,7 @@ GLuint shaderProgram      = 0;
 GLuint vertexShader       = 0;
 GLuint fragShader         = 0;
 Uint32 tickCount          = 0;
+Mix_Music* music          = nullptr;
 
 bool createVertexArray()
 {
@@ -253,6 +255,8 @@ void quit()
     // Terminate SDL
     SDL_GL_DeleteContext(context);
     SDL_DestroyWindow(window);
+    Mix_FreeMusic(music);
+    Mix_Quit();
     SDL_Quit();
 }
 
@@ -344,9 +348,14 @@ void mainloop()
     SDL_GL_SwapWindow(window);
 }
 
+void playMusic()
+{
+    Mix_PlayMusic(music, -1);
+}
+
 int main(int argc, char* argv[])
 {
-    int sdlResult = SDL_Init(SDL_INIT_VIDEO);
+    int sdlResult = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
     if (sdlResult != 0)
     {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -414,6 +423,22 @@ int main(int argc, char* argv[])
         SDL_Log("Failed to load texture");
         return EXIT_FAILURE;
     }
+
+    Mix_Init(MIX_INIT_MP3);
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0)
+    {
+        SDL_Log("Failed to initialize SDL_mixer: %s", Mix_GetError());
+        return EXIT_FAILURE;
+    }
+
+    music = Mix_LoadMUS("resources/music/test.mp3");
+    if (!music)
+    {
+        SDL_Log("Failed to load music: %s", Mix_GetError());
+        return EXIT_FAILURE;
+    }
+
+    playMusic();
 
     texturePosition.x = WINDOW_WIDTH / 2.0f;
     texturePosition.y = WINDOW_HEIGHT / 2.0f;
