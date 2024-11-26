@@ -5,6 +5,13 @@
             "platform": "!wasm32"
         },
         {
+            "name": "sdl2-mixer",
+            "platform": "!wasm32",
+            "features": [
+                "mpg123"
+            ]
+        },
+        {
             "name": "gtest",
             "platform": "!wasm32"
         },
@@ -17,6 +24,5 @@
             "platform": "!wasm32"
         },
         "glm"
-    ],
-    "builtin-baseline": "3426db05b996481ca31e95fff3734cf23e0f51bc"
+    ]
 }
