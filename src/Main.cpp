@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #include <png.h>
 #include <algorithm>
 #include <fstream>
@@ -27,16 +28,21 @@ SDL_GLContext context;
 unsigned int textureId     = 0;
 unsigned int textureWidth  = 0;
 unsigned int textureHeight = 0;
-glm::vec2 texturePosition;
-float textureScale        = 5.0f;
-unsigned int vertexArray  = 0;
-unsigned int vertexBuffer = 0;
-unsigned int indexBuffer  = 0;
-GLuint shaderProgram      = 0;
-GLuint vertexShader       = 0;
-GLuint fragShader         = 0;
-Uint32 tickCount          = 0;
-Mix_Music* music          = nullptr;
+glm::vec2 texturePosition {WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f};
+float textureScale             = 5.0f;
+unsigned int vertexArray       = 0;
+unsigned int vertexBuffer      = 0;
+unsigned int indexBuffer       = 0;
+GLuint shaderProgram           = 0;
+GLuint vertexShader            = 0;
+GLuint fragShader              = 0;
+Uint32 tickCount               = 0;
+Mix_Music* music               = nullptr;
+unsigned int fontTextureId     = 0;
+unsigned int fontTextureWidth  = 0;
+unsigned int fontTextureHeight = 0;
+SDL_Texture* fontTexture       = nullptr;
+glm::vec2 fontPosition {WINDOW_WIDTH / 2.0f, 0.0f};
 
 bool createVertexArray()
 {
@@ -248,6 +254,7 @@ void quit()
     glDeleteShader(vertexShader);
     glDeleteShader(fragShader);
     glDeleteTextures(1, &textureId);
+    glDeleteTextures(1, &fontTextureId);
     // Delete vertex array
     glDeleteBuffers(1, &vertexBuffer);
     glDeleteBuffers(1, &indexBuffer);
@@ -344,6 +351,14 @@ void mainloop()
     glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+    glUniform2f(locationIdTexture, (GLfloat)fontTextureWidth, (GLfloat)fontTextureHeight);
+    glUniform2fv(locationIdTexturePos, 1, glm::value_ptr(fontPosition));
+    glUniform1f(locationIdTextureScale, 3.0f);
+
+    // Bind GL texture
+    glBindTexture(GL_TEXTURE_2D, fontTextureId);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
     // swap the buffers
     SDL_GL_SwapWindow(window);
 }
@@ -351,6 +366,93 @@ void mainloop()
 void playMusic()
 {
     Mix_PlayMusic(music, -1);
+}
+
+int nextPowerOfTwo(int value)
+{
+    int power = 1;
+    while (power < value)
+    {
+        power *= 2;
+    }
+    return power;
+}
+
+void initializeFont()
+{
+    TTF_Init();
+    TTF_Font* font = TTF_OpenFont("resources/font/Roboto-Bold.ttf", 28);
+    if (!font)
+    {
+        SDL_Log("Failed to open font");
+        return;
+    }
+
+    SDL_Color color {255, 255, 255, 255};
+    SDL_Surface* surface = TTF_RenderText_Solid(font, "Hello World !!", color);
+    if (!surface)
+    {
+        SDL_Log("Unable to render text surface! SDL_ttf error: %s", TTF_GetError());
+        return;
+    }
+
+    // Convert surface from 8 to 32 bit for GL
+    SDL_Surface* textureImage = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA8888, 0);
+
+    // Create power of 2 dimensioned texture for GL with 1 texel border, clear it, and copy text image into it
+    SDL_Surface* texture = SDL_CreateRGBSurface(0,
+                                                textureImage->w,
+                                                nextPowerOfTwo(textureImage->h + 2),
+                                                textureImage->format->BitsPerPixel,
+                                                0,
+                                                0,
+                                                0,
+                                                0);
+    memset(texture->pixels, 0x0, texture->w * texture->h * texture->format->BytesPerPixel);
+    SDL_Rect destRect {1, texture->h - textureImage->h - 1, textureImage->w + 1, texture->h - 1};
+    SDL_SetSurfaceBlendMode(textureImage, SDL_BLENDMODE_NONE);
+    SDL_BlitSurface(textureImage, NULL, texture, &destRect);
+
+    // Determine GL texture format
+    GLint format;
+    if (texture->format->BitsPerPixel == 24)
+    {
+        format = GL_RGB;
+    }
+    else if (texture->format->BitsPerPixel == 32)
+    {
+        format = GL_RGBA;
+    }
+    else
+    {
+        SDL_Log("Invalid font texture format");
+        return;
+    }
+
+    // Generate a GL texture object
+    glGenTextures(1, &fontTextureId);
+    glBindTexture(GL_TEXTURE_2D, fontTextureId);
+
+    // Copy SDL surface image to GL texture
+    glTexImage2D(GL_TEXTURE_2D,
+                 0,
+                 format,
+                 texture->w,
+                 texture->h,
+                 0,
+                 format,
+                 GL_UNSIGNED_BYTE,
+                 texture->pixels);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    fontTextureWidth  = texture->w;
+    fontTextureHeight = texture->h;
+
+    SDL_FreeSurface(textureImage);
+    SDL_FreeSurface(texture);
+    TTF_CloseFont(font);
 }
 
 int main(int argc, char* argv[])
@@ -424,6 +526,8 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    initializeFont();
+
     Mix_Init(MIX_INIT_MP3);
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0)
     {
@@ -439,9 +543,6 @@ int main(int argc, char* argv[])
     }
 
     playMusic();
-
-    texturePosition.x = WINDOW_WIDTH / 2.0f;
-    texturePosition.y = WINDOW_HEIGHT / 2.0f;
 
     // Main Loop
 #ifdef __EMSCRIPTEN__
