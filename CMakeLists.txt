@@ -42,9 +42,10 @@ if (EMSCRIPTEN)
 
     set(USE_FLAGS "-s USE_SDL=2 -s USE_LIBPNG=1 -s USE_SDL_TTF=2 -s USE_SDL_MIXER=2 -s SDL2_MIXER_FORMATS=[mp3] -s USE_MPG123=1 --preload-file resources/")
     set(CMAKE_CXX_FLAGS ${USE_FLAGS})
-    set_target_properties(SdlWithCMake PROPERTIES SUFFIX ".html")
+    set_target_properties(SdlWithCMake PROPERTIES SUFFIX ".js")
 
     file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR})
+    file(COPY "index.html" DESTINATION ${CMAKE_BINARY_DIR})
 
     target_link_libraries(
         SdlWithCMake PRIVATE
