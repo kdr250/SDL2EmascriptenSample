@@ -22,6 +22,14 @@
 int WINDOW_WIDTH  = 1024;
 int WINDOW_HEIGHT = 768;
 
+#ifdef __EMSCRIPTEN__
+static const std::string SPRITE_SHADER_VERT = "resources/shader/Sprite.vert";
+static const std::string SPRITE_SHADER_FRAG = "resources/shader/Sprite.frag";
+#else
+static const std::string SPRITE_SHADER_VERT = "resources/shader/SpriteV3.vert";
+static const std::string SPRITE_SHADER_FRAG = "resources/shader/SpriteV3.frag";
+#endif
+
 bool running = true;
 SDL_Window* window;
 SDL_GLContext context;
@@ -511,7 +519,7 @@ int main(int argc, char* argv[])
 
     glGetError();  // On some platforms, GLEW will emit a benign error code, so clear it
 
-    if (!loadShaders("resources/shader/Sprite.vert", "resources/shader/Sprite.frag"))
+    if (!loadShaders(SPRITE_SHADER_VERT, SPRITE_SHADER_FRAG))
     {
         SDL_Log("Failed to load shaders");
         return EXIT_FAILURE;
@@ -547,7 +555,7 @@ int main(int argc, char* argv[])
 
     playMusic();
 
-    // Main Loop
+// Main Loop
 #ifdef __EMSCRIPTEN__
     emscripten_set_main_loop(mainloop, 0, 1);
 #else
