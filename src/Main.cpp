@@ -368,7 +368,7 @@ void mainloop()
     processInput(state, deltaTime);
     updateBullets();
 
-    glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
 
     glEnable(GL_BLEND);
@@ -381,7 +381,7 @@ void mainloop()
     for (auto& bullet : bulletPositions)
     {
         GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
-        glUniform2f(locationBulletSize, 100.0, 100.0);
+        glUniform2f(locationBulletSize, 200.0, 200.0);
         GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
         glUniform2fv(locationBulletPos, 1, glm::value_ptr(bullet.first));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
