@@ -386,19 +386,6 @@ void mainloop()
         glUniform2fv(locationBulletPos, 1, glm::value_ptr(bullet.first));
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
     }
-    // for (int i = 0; i <= 2; i += 2)
-    // {
-    //     for (int j = 0; j <= 2; j += 2)
-    //     {
-    //         GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
-    //         glUniform2f(locationBulletSize, 100.0, 100.0);
-    //         GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
-    //         glUniform2f(locationBulletPos,
-    //                     WINDOW_WIDTH / 4.0f * (i + 1),
-    //                     WINDOW_HEIGHT / 4.0f * (j + 1));
-    //         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    //     }
-    // }
 
     // set active
     glUseProgram(shaderProgram);
