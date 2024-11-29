@@ -25,9 +25,13 @@ int WINDOW_HEIGHT = 768;
 #ifdef __EMSCRIPTEN__
 static const std::string SPRITE_SHADER_VERT = "resources/shader/Sprite.vert";
 static const std::string SPRITE_SHADER_FRAG = "resources/shader/Sprite.frag";
+static const std::string BULLET_SHADER_VERT = "resources/shader/Bullet.vert";
+static const std::string BULLET_SHADER_FRAG = "resources/shader/Bullet.frag";
 #else
 static const std::string SPRITE_SHADER_VERT = "resources/shader/SpriteV3.vert";
 static const std::string SPRITE_SHADER_FRAG = "resources/shader/SpriteV3.frag";
+static const std::string BULLET_SHADER_VERT = "resources/shader/BulletV3.vert";
+static const std::string BULLET_SHADER_FRAG = "resources/shader/BulletV3.frag";
 #endif
 
 bool running = true;
@@ -44,6 +48,9 @@ unsigned int indexBuffer       = 0;
 GLuint shaderProgram           = 0;
 GLuint vertexShader            = 0;
 GLuint fragShader              = 0;
+GLuint bulletShaderProgram     = 0;
+GLuint bulletVertexShader      = 0;
+GLuint bulletFragShader        = 0;
 Uint32 tickCount               = 0;
 Mix_Music* music               = nullptr;
 unsigned int fontTextureId     = 0;
@@ -140,35 +147,39 @@ bool compileShader(const std::string& fileName, GLenum shaderType, GLuint& outSh
     return true;
 }
 
-bool isValidShader()
+bool isValidShader(const GLuint& outShaderProgram)
 {
     GLint status;
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &status);
+    glGetProgramiv(outShaderProgram, GL_LINK_STATUS, &status);
     char buffer[512];
     memset(buffer, 0, 512);
-    glGetProgramInfoLog(shaderProgram, 511, nullptr, buffer);
+    glGetProgramInfoLog(outShaderProgram, 511, nullptr, buffer);
     SDL_Log("GLSL Link status: %s", buffer);
     return status == GL_TRUE;
 }
 
-bool loadShaders(const std::string& vertName, const std::string& fragName)
+bool loadShaders(const std::string& vertName,
+                 const std::string& fragName,
+                 GLuint& outShaderProgram,
+                 GLuint& outVertexShader,
+                 GLuint& outFragShader)
 {
     // Compile vertex and pixel shaders
-    if (!compileShader(vertName, GL_VERTEX_SHADER, vertexShader)
-        || !compileShader(fragName, GL_FRAGMENT_SHADER, fragShader))
+    if (!compileShader(vertName, GL_VERTEX_SHADER, outVertexShader)
+        || !compileShader(fragName, GL_FRAGMENT_SHADER, outFragShader))
     {
         return false;
     }
 
     // Now create a shader program that links together the vertex/frag shaders
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragShader);
-    glLinkProgram(shaderProgram);
-    glUseProgram(shaderProgram);
+    outShaderProgram = glCreateProgram();
+    glAttachShader(outShaderProgram, outVertexShader);
+    glAttachShader(outShaderProgram, outFragShader);
+    glLinkProgram(outShaderProgram);
+    glUseProgram(outShaderProgram);
 
     // Verify that the program linked successfully
-    if (!isValidShader())
+    if (!isValidShader(outShaderProgram))
     {
         return false;
     }
@@ -261,6 +272,9 @@ void quit()
     glDeleteProgram(shaderProgram);
     glDeleteShader(vertexShader);
     glDeleteShader(fragShader);
+    glDeleteProgram(bulletShaderProgram);
+    glDeleteShader(bulletVertexShader);
+    glDeleteShader(bulletFragShader);
     glDeleteTextures(1, &textureId);
     glDeleteTextures(1, &fontTextureId);
     // Delete vertex array
@@ -343,6 +357,19 @@ void mainloop()
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
 
+    glEnable(GL_BLEND);
+
+    // Draw Bullet
+    glUseProgram(bulletShaderProgram);
+    glBindVertexArray(vertexArray);
+    GLuint locationIdBullet = glGetUniformLocation(bulletShaderProgram, "uWindowSize");
+    glUniform2f(locationIdBullet, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    // set active
+    glUseProgram(shaderProgram);
+    glBindVertexArray(vertexArray);
+
     // Set window size and texture size and position as uniform
     GLuint locationIdWindow = glGetUniformLocation(shaderProgram, "uWindowSize");
     glUniform2f(locationIdWindow, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
@@ -353,17 +380,14 @@ void mainloop()
     GLuint locationIdTextureScale = glGetUniformLocation(shaderProgram, "uTextureScale");
     glUniform1f(locationIdTextureScale, (GLfloat)textureScale);
 
-    // set active
-    glUseProgram(shaderProgram);
-    glBindVertexArray(vertexArray);
     glBindTexture(GL_TEXTURE_2D, textureId);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
+    // Draw Text
     glUniform2f(locationIdTexture, (GLfloat)fontTextureWidth, (GLfloat)fontTextureHeight);
     glUniform2fv(locationIdTexturePos, 1, glm::value_ptr(fontPosition));
     glUniform1f(locationIdTextureScale, 3.0f);
 
-    // Bind GL texture
     glBindTexture(GL_TEXTURE_2D, fontTextureId);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
@@ -519,7 +543,16 @@ int main(int argc, char* argv[])
 
     glGetError();  // On some platforms, GLEW will emit a benign error code, so clear it
 
-    if (!loadShaders(SPRITE_SHADER_VERT, SPRITE_SHADER_FRAG))
+    if (!loadShaders(BULLET_SHADER_VERT,
+                     BULLET_SHADER_FRAG,
+                     bulletShaderProgram,
+                     bulletVertexShader,
+                     bulletFragShader)
+        || !loadShaders(SPRITE_SHADER_VERT,
+                        SPRITE_SHADER_FRAG,
+                        shaderProgram,
+                        vertexShader,
+                        fragShader))
     {
         SDL_Log("Failed to load shaders");
         return EXIT_FAILURE;
