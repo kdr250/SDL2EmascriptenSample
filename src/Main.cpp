@@ -4,10 +4,13 @@
 #include <SDL2/SDL_ttf.h>
 #include <png.h>
 #include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <utility>
+#include <vector>
 
 #define GLM_FORCE_PURE
 #include <glm/gtc/type_ptr.hpp>
@@ -21,6 +24,7 @@
 
 int WINDOW_WIDTH  = 1024;
 int WINDOW_HEIGHT = 768;
+float PI          = 3.1415926535f;
 
 #ifdef __EMSCRIPTEN__
 static const std::string SPRITE_SHADER_VERT = "resources/shader/Sprite.vert";
@@ -58,6 +62,7 @@ unsigned int fontTextureWidth  = 0;
 unsigned int fontTextureHeight = 0;
 SDL_Texture* fontTexture       = nullptr;
 glm::vec2 fontPosition {WINDOW_WIDTH / 2.0f, 0.0f};
+std::vector<std::pair<glm::vec2, glm::vec2>> bulletPositions;
 
 bool createVertexArray()
 {
@@ -318,6 +323,14 @@ void processInput(const Uint8* keyboardState, const float deltaTime)
     texturePosition.y = std::min(texturePosition.y, WINDOW_HEIGHT - diffY);
 }
 
+void updateBullets()
+{
+    for (auto& bullet : bulletPositions)
+    {
+        bullet.first += bullet.second;
+    }
+}
+
 void mainloop()
 {
     if (!running)
@@ -353,6 +366,7 @@ void mainloop()
     }
 
     processInput(state, deltaTime);
+    updateBullets();
 
     glClearColor(0.0f, 0.0f, 1.0f, 1.0f);  // set the clear color to blue
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
@@ -364,19 +378,27 @@ void mainloop()
     glBindVertexArray(vertexArray);
     GLuint locationIdBullet = glGetUniformLocation(bulletShaderProgram, "uWindowSize");
     glUniform2f(locationIdBullet, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
-    for (int i = 0; i <= 2; i += 2)
+    for (auto& bullet : bulletPositions)
     {
-        for (int j = 0; j <= 2; j += 2)
-        {
-            GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
-            glUniform2f(locationBulletSize, 100.0, 100.0);
-            GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
-            glUniform2f(locationBulletPos,
-                        WINDOW_WIDTH / 4.0f * (i + 1),
-                        WINDOW_HEIGHT / 4.0f * (j + 1));
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-        }
+        GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
+        glUniform2f(locationBulletSize, 100.0, 100.0);
+        GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
+        glUniform2fv(locationBulletPos, 1, glm::value_ptr(bullet.first));
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
     }
+    // for (int i = 0; i <= 2; i += 2)
+    // {
+    //     for (int j = 0; j <= 2; j += 2)
+    //     {
+    //         GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
+    //         glUniform2f(locationBulletSize, 100.0, 100.0);
+    //         GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
+    //         glUniform2f(locationBulletPos,
+    //                     WINDOW_WIDTH / 4.0f * (i + 1),
+    //                     WINDOW_HEIGHT / 4.0f * (j + 1));
+    //         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    //     }
+    // }
 
     // set active
     glUseProgram(shaderProgram);
@@ -502,6 +524,24 @@ void initializeFont()
     TTF_CloseFont(font);
 }
 
+void initializeBullets()
+{
+    const int bulletNum = 4;
+    float degree        = 360.0f / bulletNum;
+    float speed         = 1.0f;
+    float currentDegree = 0.0f;
+    for (int i = 0; i < bulletNum; ++i)
+    {
+        float radian = currentDegree / 180.0f * PI;
+        glm::vec2 velocity {0.0f, 0.0f};
+        velocity.x = std::cosf(radian) * speed;
+        velocity.y = std::sinf(radian) * speed;
+        glm::vec2 position {WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f};
+        bulletPositions.push_back(std::make_pair(position, velocity));
+        currentDegree += degree;
+    }
+}
+
 int main(int argc, char* argv[])
 {
     int sdlResult = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
@@ -583,6 +623,7 @@ int main(int argc, char* argv[])
     }
 
     initializeFont();
+    initializeBullets();
 
     Mix_Init(MIX_INIT_MP3);
     if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 1024) < 0)
