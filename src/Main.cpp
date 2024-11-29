@@ -40,7 +40,7 @@ SDL_GLContext context;
 unsigned int textureId     = 0;
 unsigned int textureWidth  = 0;
 unsigned int textureHeight = 0;
-glm::vec2 texturePosition {WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT / 2.0f};
+glm::vec2 texturePosition {WINDOW_WIDTH / 2.0f, WINDOW_HEIGHT - 200.0f};
 float textureScale             = 5.0f;
 unsigned int vertexArray       = 0;
 unsigned int vertexBuffer      = 0;
@@ -364,7 +364,19 @@ void mainloop()
     glBindVertexArray(vertexArray);
     GLuint locationIdBullet = glGetUniformLocation(bulletShaderProgram, "uWindowSize");
     glUniform2f(locationIdBullet, (GLfloat)WINDOW_WIDTH, (GLfloat)WINDOW_HEIGHT);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    for (int i = 0; i <= 2; i += 2)
+    {
+        for (int j = 0; j <= 2; j += 2)
+        {
+            GLuint locationBulletSize = glGetUniformLocation(bulletShaderProgram, "uBulletSize");
+            glUniform2f(locationBulletSize, 100.0, 100.0);
+            GLuint locationBulletPos = glGetUniformLocation(bulletShaderProgram, "uBulletPosition");
+            glUniform2f(locationBulletPos,
+                        WINDOW_WIDTH / 4.0f * (i + 1),
+                        WINDOW_HEIGHT / 4.0f * (j + 1));
+            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        }
+    }
 
     // set active
     glUseProgram(shaderProgram);
