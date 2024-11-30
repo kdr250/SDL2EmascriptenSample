@@ -1,4 +1,4 @@
-project(TestProject VERSION 1.0)
+project(testmain VERSION 1.0)
 
 find_package(GTest CONFIG REQUIRED)
 
@@ -14,13 +14,13 @@ file(GLOB_RECURSE TESTS "src/*.cpp")
 file(GLOB_RECURSE SOURCES "../src/*.cpp")
 list(FILTER SOURCES EXCLUDE REGEX "Main.cpp")
 
-add_executable(TestProject ${TESTS} ${SOURCES})
+add_executable(testmain ${TESTS} ${SOURCES})
 
 target_link_libraries(
-    TestProject
+    testmain
     GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
     $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
     $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
 )
 
-gtest_discover_tests(TestProject)
+gtest_discover_tests(testmain)
