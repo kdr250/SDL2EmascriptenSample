@@ -1,0 +1,30 @@
+name: wasm-deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set vcpkg environmental variable
+        shell: bash
+        run: |
+          echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+
+      - name: Build
+        run: |
+          emcmake cmake -B build-web &&
+          cmake --build build-web
+
+      - name: Check Output
+        run: |
+          ls build-web
