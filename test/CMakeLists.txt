@@ -16,11 +16,29 @@ list(FILTER SOURCES EXCLUDE REGEX "Main.cpp")
 
 add_executable(testmain ${TESTS} ${SOURCES})
 
-target_link_libraries(
-    testmain
-    GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
-    $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
-    $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
-)
+if (EMSCRIPTEN)
+
+    file(COPY ${PROJECT_SOURCE_DIR}/resources DESTINATION ${CMAKE_BINARY_DIR}/test)
+
+    target_link_libraries(
+        testmain
+        GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
+    )
+
+else()
+
+    target_link_libraries(
+        testmain
+        GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main
+        $<TARGET_NAME_IF_EXISTS:SDL2::SDL2main>
+        $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static>
+    )
+
+    add_custom_command(
+        TARGET testmain POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:testmain>/resources
+    )
+
+endif()
 
 gtest_discover_tests(testmain)

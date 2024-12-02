@@ -16,10 +16,6 @@
             "platform": "!wasm32"
         },
         {
-            "name": "gtest",
-            "platform": "!wasm32"
-        },
-        {
             "name": "glew",
             "platform": "!wasm32"
         },
@@ -27,6 +23,7 @@
             "name": "libpng",
             "platform": "!wasm32"
         },
-        "glm"
+        "glm",
+        "gtest"
     ]
 }

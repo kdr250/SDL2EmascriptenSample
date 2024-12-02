@@ -70,8 +70,7 @@ else()
         COMMAND ${CMAKE_COMMAND} -E copy_directory ${PROJECT_SOURCE_DIR}/resources $<TARGET_FILE_DIR:main>/resources
     )
 
-    enable_testing()
-
-    add_subdirectory(test)
-
 endif()
+
+enable_testing()
+add_subdirectory(test)
