@@ -2,7 +2,7 @@
 
 TEST(Sample, Add)
 {
-    EXPECT_EQ(1 + 1, 3);  // FIXME
+    EXPECT_EQ(1 + 1, 2);
 }
 
 int main(int argc, char** argv)
