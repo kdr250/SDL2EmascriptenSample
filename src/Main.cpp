@@ -372,6 +372,7 @@ void mainloop()
     glClear(GL_COLOR_BUFFER_BIT);          // Clear the color buffer
 
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Draw Bullet
     glUseProgram(bulletShaderProgram);
