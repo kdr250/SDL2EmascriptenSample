@@ -5,7 +5,7 @@ precision mediump float;
 varying vec2 windowSize;
 varying vec2 centerPos;
 
-const float radius = 5.0;
+const float radius = 8.0;
 
 void main()
 {
@@ -13,6 +13,6 @@ void main()
     fragCoord.y = windowSize.y - fragCoord.y;
     float dist = distance(centerPos, fragCoord);
 
-    float color = pow(radius / dist, 2.0);
-    gl_FragColor = vec4(0.0, color, 0.0, 1.0);
+    float color = radius / dist;
+    gl_FragColor = vec4(0.0, color, 0.0, color);
 }
